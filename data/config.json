@@ -1,0 +1,9 @@
+{
+"hostName":"bbq2",
+"MDSNname":"default.example.com",
+"password":"password_default",
+"client_SSID":"default",
+"client_password":"default",
+"AP_SSID":"AP_SSID_default",
+"AP_password":"AP_password_default",
+}
