@@ -1,0 +1,11 @@
+Info: Output directory '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber' created.
+Plotted to '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-Top.gbr'.
+Plotted to '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-Bottom.gbr'.
+Plotted to '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-F_Paste.gbr'.
+Plotted to '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-F_Silkscreen.gbr'.
+Plotted to '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-B_Silkscreen.gbr'.
+Plotted to '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-F_Mask.gbr'.
+Plotted to '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-B_Mask.gbr'.
+Plotted to '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-Edge_Cuts.gbr'.
+Created Gerber job file '/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base/gerber/HeaterMeterPI-job.gbrjob'.
+Info: Done.

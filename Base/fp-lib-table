@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name "HeaterMeterPI")(type "KiCad")(uri "$(KIPRJMOD)/HeaterMeterPI.pretty")(options "")(descr ""))
+  (lib (name "Base")(type "KiCad")(uri "/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/Base.pretty")(options "")(descr ""))
+)

@@ -1,4 +1,5 @@
-#include <ESP8266mDNS.h>
+//#include <ESP8266mDNS.h>
+#include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <Time.h>
 #include <TimeLib.h>
@@ -58,7 +59,7 @@ void startUDP() {
   Serial.println("Starting UDP");
   UDP.begin(123);                          // Start listening for UDP messages to port 123
   Serial.print("Local port:\t");
-  Serial.println(UDP.localPort());
+//  Serial.println(UDP.localPort());
 }
 
 
@@ -125,7 +126,7 @@ void ntpstuff() {
   } else if ((millis() - lastNTPResponse) > 24UL * ONE_HOUR) {
     Serial.println("More than 24 hours since last NTP response. Rebooting.");
     Serial.flush();
-    ESP.reset();
+    ESP.restart();
   }
   }
 

@@ -107,6 +107,7 @@ void GettempQuad_MAX31856 () {
   for (int i = 0; i < NUM_MAX31856; i++) {
     // Display the thermocouple temperature
     tempreatureArray[i] = TemperatureSensor[i]->readThermocouple(CELSIUS);
+    if (tempreatureArray[i] >10000) {tempreatureArray[i] = -1;}
  //delay(50); 
  }
 }

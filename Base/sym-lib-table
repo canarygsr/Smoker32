@@ -1,0 +1,5 @@
+(sym_lib_table
+  (lib (name "HeaterMeterPI-eagle-import")(type "Legacy")(uri "${KIPRJMOD}/HeaterMeterPI-eagle-import.lib")(options "")(descr ""))
+  (lib (name "MCU_Module2")(type "KiCad")(uri "/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/MCU_Module2.kicad_sym")(options "")(descr ""))
+  (lib (name "ESP32-DEVKITC-32D")(type "Legacy")(uri "/home/nicholas/Documents/GitHub/HeaterMeter-master/eagle/ESP32-DEVKITC-32D/ESP32-DEVKITC-32D.lib")(options "")(descr ""))
+)

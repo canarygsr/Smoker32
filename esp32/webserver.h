@@ -1,14 +1,20 @@
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WiFiMulti.h>
-#include <ESP8266HTTPUpdateServer.h>
-#include <ESP8266WebServer.h>
+//#include <ESP8266WiFi.h>
+//#include <ESP8266WiFiMulti.h>
+//#include <ESP8266HTTPUpdateServer.h>
+//#include <ESP8266WebServer.h>
+
+//#include <WiFi.h>
+//#include <WiFiClient.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+#include <HTTPUpdateServer.h>
 
 #include <FS.h>
-#include "6json.h"
+//#include "6json.h"
 
-ESP8266WebServer server(80);             // create a web server on port 80
-ESP8266HTTPUpdateServer httpUpdater;
+WebServer server(80);             // create a web server on port 80
+HTTPUpdateServer httpUpdater;
 File fsUploadFile;                                    // a File variable to temporarily store the received file
 
 String getContentType(String filename) { // determine the filetype of a given filename, based on the extension
@@ -23,7 +29,7 @@ String getContentType(String filename) { // determine the filetype of a given fi
 
 /*__________________________________________________________SPIFFS_HANDLERS__________________________________________________________*/
 
-void startSPIFFS() { // Start the SPIFFS and list all contents
+/*void startSPIFFS() { // Start the SPIFFS and list all contents
   SPIFFS.begin();                             // Start the SPI Flash File System (SPIFFS)
 
 
@@ -89,10 +95,10 @@ bool handleFileRead(String path) { // send the right file to the client (if it e
   if (path.endsWith("/")) path += "index.html";          // If a folder is requested, send the index file
   String contentType = getContentType(path);             // Get the MIME type
   String pathWithGz = path + ".gz";
-  if (SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)) { // If the file exists, either as a compressed archive, or normal
-    if (SPIFFS.exists(pathWithGz))                         // If there's a compressed version available
+  if (LITTLEFS.exists(pathWithGz) || LITTLEFS.exists(path)) { // If the file exists, either as a compressed archive, or normal
+    if (LITTLEFS.exists(pathWithGz))                         // If there's a compressed version available
       path += ".gz";                                         // Use the compressed verion
-    File file = SPIFFS.open(path, "r");                    // Open the file
+    File file = LITTLEFS.open(path, "r");                    // Open the file
     size_t sent = server.streamFile(file, contentType);    // Send it to the client
     file.close();                                          // Close the file again
     Serial.println(String("\tSent file: ") + path);
@@ -110,11 +116,11 @@ void handleFileUpload() { // upload a new file to the SPIFFS
     if (!path.startsWith("/")) path = "/" + path;
     if (!path.endsWith(".gz")) {                         // The file server always prefers a compressed version of a file
       String pathWithGz = path + ".gz";                  // So if an uploaded file is not compressed, the existing compressed
-      if (SPIFFS.exists(pathWithGz))                     // version of that file must be deleted (if it exists)
-        SPIFFS.remove(pathWithGz);
+      if (LITTLEFS.exists(pathWithGz))                     // version of that file must be deleted (if it exists)
+        LITTLEFS.remove(pathWithGz);
     }
     Serial.print("handleFileUpload Name: "); Serial.println(path);
-    fsUploadFile = SPIFFS.open(path, "w");               // Open the file for writing in SPIFFS (create if it doesn't exist)
+    fsUploadFile = LITTLEFS.open(path, "w");               // Open the file for writing in SPIFFS (create if it doesn't exist)
     path = String();
   } else if (upload.status == UPLOAD_FILE_WRITE) {
     if (fsUploadFile)
@@ -163,9 +169,8 @@ void handlesettings() {
       Probe[i].Pit = 0;
     }
   }
-  makesettingsjson();
-  //writesettingsspiffs();
-  //  saveConfiguration(filename, config);
+
+SaveBBQsettings("/BBQSettings.json");
   server.send(200, "text/plain", "Settings updated press back");
 }
 
@@ -192,10 +197,9 @@ void startServer() { // Start a HTTP server with a file read handler and an uplo
 */
   server.on("/del", []() {
     server.send(200, "text/plain", "Deleting files...");
-    SPIFFS.remove("/temp_log.csv");
-    //SPIFFS.remove("/favicon-144x144.png");
-    spiffscontence();
-    server.send(200, "text/plain", "Restarting...");
+    deleteFile(SPIFFS, "/temp_log.csv");
+    listDir(SPIFFS, "/", 0);
+    //server.send(200, "text/plain", "Restarting...");
   });
 
   server.on("/settings.html", []() {
@@ -208,7 +212,7 @@ void startServer() { // Start a HTTP server with a file read handler and an uplo
 
   server.on("/loadconfig", []() {
     server.send(200, "text/plain", settingsstring);
-    loadConfiguration();
+//    loadConfiguration();
   });
 
   server.on("/data/updatevalues.xml", []() {

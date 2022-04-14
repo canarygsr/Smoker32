@@ -5,8 +5,8 @@ String settingxml;
 //double temp;
 float temp;
 bool  redrawScreen = false;
-int   alarm;
-struct Config {
+int   alm;
+/*struct Config {
   char MDSNname[64];
   char password[64];
   char client_SSID[64];
@@ -14,9 +14,10 @@ struct Config {
   char AP_SSID[64];
   char AP_password[64];
   char hostName[64];
+  int stringwidth;
 };
 Config config;
-
+*/
 typedef struct {
   uint16_t    Setpoint;         // setpoint
   uint16_t    ProbePreWarning;
@@ -29,11 +30,12 @@ typedef struct {
   uint8_t     SetpointReached  : 1;  // if set temperature has been reached
   uint8_t     Present          : 1;  // true if probe is connected
   uint8_t     TempChanged      : 1;  // true if temp has changed - throttles updates to Blynk dashboard
-  uint8_t     alarm     : 1;  // set after a reconnect event so updateSetpoint can sync the slider values
+  uint8_t     alm     : 1;  // set after a reconnect event so updateSetpoint can sync the slider values
   uint8_t     OverTemp         : 1;      // if probe has exceeded tempreature by x percent
   uint8_t     ApproachSetpoint : 1;     // warning that probe is approaching set tempreature x percent
   uint8_t     Pit              : 1;
   uint8_t     PitColdWarning   : 1;       // pit probe warining that pit is cold!!
+  uint16_t    stringwidth;
 } ProbeType;
 
 ProbeType Probe[NUM_MAX31856];
@@ -89,33 +91,33 @@ temp = tempreatureArray[i];
   // /*
   if (Probe[i].CurrentTemp < Probe[i].ProbePreWarning)
 {
-  Probe[i].alarm = 0;
-  alarm = 0; // no alarms for meat
+  Probe[i].alm = 0;
+  alm = 0; // no alarms for meat
     if (Probe[i].Pit == 1)
     { Probe[i].PitColdWarning = true;
-      alarm = 1;}  // low pit/oven temp alarm
+      alm = 1;}  // low pit/oven temp alarm
 }else{ Probe[i].PitColdWarning = false;}
-if ((Probe[i].CurrentTemp > Probe[i].ProbePreWarning) && (Probe[i].alarm != 1)) // will triger stall temp alarm
+if ((Probe[i].CurrentTemp > Probe[i].ProbePreWarning) && (Probe[i].alm != 1)) // will triger stall temp alarm
 {
    Probe[i].ApproachSetpoint = true;
-  if (alarm == 1) {alarm = 1;} else {alarm = 2;} 
-Probe[i].alarm = 1;
+  if (alm == 1) {alm = 1;} else {alm = 2;} 
+Probe[i].alm = 1;
 }
 else {Probe[i].ApproachSetpoint = false;}
 
-if ((Probe[i].CurrentTemp > Probe[i].Setpoint) && (Probe[i].alarm != 2)) // will trigger set tempreatre alarm
+if ((Probe[i].CurrentTemp > Probe[i].Setpoint) && (Probe[i].alm != 2)) // will trigger set tempreatre alarm
 {
   Probe[i].SetpointReached = true;
-  alarm = 1;
-  Probe[i].alarm = 2;
+  alm = 1;
+  Probe[i].alm = 2;
 }
 else {Probe[i].SetpointReached = false;}
 
-if ((Probe[i].CurrentTemp > Probe[i].ProbeOTWarning) && (Probe[i].alarm != 3)) // trigger pit/oven over temp
+if ((Probe[i].CurrentTemp > Probe[i].ProbeOTWarning) && (Probe[i].alm != 3)) // trigger pit/oven over temp
 {
 Probe[i].OverTemp = true;
-alarm = 1;
-Probe[i].alarm = 3;
+alm = 1;
+Probe[i].alm = 3;
 }
 else {Probe[i].OverTemp = false;}
     }
@@ -153,7 +155,7 @@ else {Probe[i].OverTemp = false;}
    Serial.println();
  
 
-     }   Serial.println(alarm);
+     }   Serial.println(alm);
 }
 
 void buildsettingxml (void) {
@@ -174,4 +176,53 @@ settingxml += "</probe>\n";
 }
 settingxml += "</settings>\n";
 //Serial.print(settingxml); //uncomment to view output
+}
+
+void writetospiffs() {
+  //timenow ();
+ // File f = SPIFFS.open("/temp_log.csv", "a");
+//  if (!f) {
+//    Serial.println("file open failed");
+//  }
+//  else {
+
+//    Serial.println("====== Writing to SPIFFS file{i} =========");
+    // write  strings to file
+    Serial.println("[");
+    Serial.print("timenow"); //change to timenow()
+    for (int i = 0; i < NUM_MAX31856; i++) {
+      Serial.print(", ");
+     if (Probe[i].Present == true){
+      Serial.print(Probe[i].CurrentTemp);
+    }
+    else 
+    Serial.print(Probe[i].Setpoint);}
+    
+  
+  Serial.println("],");
+  Serial.println("SPIFFS updated");
+
+}
+
+void maxstringlength(){
+  int max_string_length_array[4];
+  for(int i=0;i< 4 ;i++){
+   Serial.println((Probe[i].ProbeName).length());
+   max_string_length_array[i] = (Probe[i].ProbeName).length();
+   Serial.println(max_string_length_array[i]);
+  }
+unsigned kmax=0;
+unsigned smax=0;
+for (byte k=0; k<4; k++)
+  if ( max_string_length_array[k] > smax) {
+     smax =  max_string_length_array[k];
+     kmax = k;
+  }
+  //Serial.println(kmax);
+  Serial.print("smax=");
+  Probe[0].stringwidth = smax;
+  Serial.println(Probe[0].stringwidth);
+//  max now contains the largest spectral value.
+// kmax contains the index to the largest spectral value.
+  
 }
