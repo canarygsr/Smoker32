@@ -1,22 +1,12 @@
 #include <MAX31856.h>
 
-/*#define SCK    3
-  #define CS    4
-  //#define CS0    4
-  //#define CS1    5
-  //#define CS2    6
-  //#define CS3    7
-  #define SDI    8
-  #define SDO    9
-*/
-
-#define SDO    12
-#define SDI    13
-#define SCK    14
-#define CS0    5
-#define CS1    16
-#define CS2    2
-#define CS3    0
+#define SDO    19//12
+#define SDI    23//13
+#define SCK    18//14
+#define CS0    27//5
+#define CS1    26//16
+#define CS2    25//2
+#define CS3    33//0
 //#define NUM_MAX31856   4 // number of Max31856 chips to use
 float  temperature;
 float  tempreatureArray[NUM_MAX31856];
