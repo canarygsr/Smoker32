@@ -4,7 +4,7 @@
 
 #include <ArduinoJson.h>
 #include "FS.h"
-#include <LITTLEFS.h>
+#include <SPIFFS.h>
 
 struct Config {
   char MDSNname[64];
@@ -31,7 +31,7 @@ const size_t capacity = 6*JSON_ARRAY_SIZE(4) + JSON_OBJECT_SIZE(10) + 190;
 
 void loadConfiguration(const char * path, Config &config) {
 String aLine;
-File file = LITTLEFS.open(path, "r");
+File file = FILESYSTEM.open(path, "r");
     if (!file) {
     Serial.print("Cannot open ");
     Serial.println(path);
@@ -71,7 +71,7 @@ void makesettingsjson(const char * path) {
   doc["client_password"] = config.client_password;
 
   Serial.printf("Writing file: %s\r\n", path);
-    File file = LITTLEFS.open(path, FILE_WRITE);
+    File file = FILESYSTEM.open(path, FILE_WRITE);
     if(!file){
         Serial.println("- failed to open file for writing");
         return;
@@ -86,7 +86,7 @@ void makesettingsjson(const char * path) {
 
 void LoadBBQsettings(const char * path, Config &config) { //not checked it working yet
 String aLine;
-File file = LITTLEFS.open(path, "r");
+File file = FILESYSTEM.open(path, "r");
     if (!file) {
     Serial.print("Cannot open ");
     Serial.println(path);
@@ -139,7 +139,7 @@ for ( int i = 0; i < NUM_MAX31856; i++ ) {
   
   
   Serial.printf("Writing file: %s\r\n", path);
-    File file = LITTLEFS.open(path, FILE_WRITE);
+    File file = FILESYSTEM.open(path, FILE_WRITE);
     if(!file){
         Serial.println("- failed to open file for writing");
         return;

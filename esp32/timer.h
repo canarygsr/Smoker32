@@ -1,7 +1,7 @@
 //#include <ESP8266mDNS.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
-#include <Time.h>
+//#include <Time.h>
 #include <TimeLib.h>
 
 
@@ -13,16 +13,6 @@ const char* ntpServerName = "time.nist.gov";
 const int NTP_PACKET_SIZE = 48;          // NTP time stamp is in the first 48 bytes of the message
 
 byte packetBuffer[NTP_PACKET_SIZE];      // A buffer to hold incoming and outgoing packets
-
-String formatBytes(size_t bytes) { // convert sizes in bytes to KB and MB
-  if (bytes < 1024) {
-    return String(bytes) + "B";
-  } else if (bytes < (1024 * 1024)) {
-    return String(bytes / 1024.0) + "KB";
-  } else if (bytes < (1024 * 1024 * 1024)) {
-    return String(bytes / 1024.0 / 1024.0) + "MB";
-  }
-}
 
 //const char* mdnsName = "esp8266";        // Domain name for the mDNS responder
 

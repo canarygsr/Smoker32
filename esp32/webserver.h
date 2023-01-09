@@ -9,132 +9,186 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <HTTPUpdateServer.h>
+HTTPUpdateServer httpUpdater;
 
 #include <FS.h>
 //#include "6json.h"
+//#define FILESYSTEM SPIFFS
+#define DBG_OUTPUT_PORT Serial
 
-WebServer server(80);             // create a web server on port 80
-HTTPUpdateServer httpUpdater;
-File fsUploadFile;                                    // a File variable to temporarily store the received file
 
-String getContentType(String filename) { // determine the filetype of a given filename, based on the extension
-  if (filename.endsWith(".html")) return "text/html";
-  else if (filename.endsWith(".css")) return "text/css";
-  else if (filename.endsWith(".js")) return "application/javascript";
-  else if (filename.endsWith(".ico")) return "image/x-icon";
-  else if (filename.endsWith(".gz")) return "application/x-gzip";
+WebServer server(80);
+//holds the current upload
+File fsUploadFile;
+
+//format bytes
+String formatBytes(size_t bytes) {
+  if (bytes < 1024) {
+    return String(bytes) + "B";
+  } else if (bytes < (1024 * 1024)) {
+    return String(bytes / 1024.0) + "KB";
+  } else if (bytes < (1024 * 1024 * 1024)) {
+    return String(bytes / 1024.0 / 1024.0) + "MB";
+  } else {
+    return String(bytes / 1024.0 / 1024.0 / 1024.0) + "GB";
+  }
+}
+
+String getContentType(String filename) {
+  if (server.hasArg("download")) {
+    return "application/octet-stream";
+  } else if (filename.endsWith(".htm")) {
+    return "text/html";
+  } else if (filename.endsWith(".html")) {
+    return "text/html";
+  } else if (filename.endsWith(".css")) {
+    return "text/css";
+  } else if (filename.endsWith(".js")) {
+    return "application/javascript";
+  } else if (filename.endsWith(".png")) {
+    return "image/png";
+  } else if (filename.endsWith(".gif")) {
+    return "image/gif";
+  } else if (filename.endsWith(".jpg")) {
+    return "image/jpeg";
+  } else if (filename.endsWith(".ico")) {
+    return "image/x-icon";
+  } else if (filename.endsWith(".xml")) {
+    return "text/xml";
+  } else if (filename.endsWith(".pdf")) {
+    return "application/x-pdf";
+  } else if (filename.endsWith(".zip")) {
+    return "application/x-zip";
+  } else if (filename.endsWith(".gz")) {
+    return "application/x-gzip";
+  }
   return "text/plain";
 }
 
-
-/*__________________________________________________________SPIFFS_HANDLERS__________________________________________________________*/
-
-/*void startSPIFFS() { // Start the SPIFFS and list all contents
-  SPIFFS.begin();                             // Start the SPI Flash File System (SPIFFS)
-
-
-  Serial.println("SPIFFS started. Contents:");
-  Dir dir = SPIFFS.openDir("/");
-  while (dir.next()) {
-    Serial.print(dir.fileName());
-    if (dir.fileSize()) {
-      File f = dir.openFile("r");
-      Serial.println(f.size());
-    }
+bool exists(String path){
+  bool yes = false;
+  File file = FILESYSTEM.open(path, "r");
+  if(!file.isDirectory()){
+    yes = true;
   }
+  file.close();
+  return yes;
 }
 
-
-void spiffscontence() {
-  Serial.println("SPIFFS updated Contents below:");
-  Dir dir = SPIFFS.openDir("/");
-  while (dir.next()) {
-    Serial.print(dir.fileName() + ":");
-    if (dir.fileSize()) {
-      File f = dir.openFile("r");
-      Serial.println(f.size());
-    }
+bool handleFileRead(String path) {
+  DBG_OUTPUT_PORT.println("handleFileRead: " + path);
+  if (path.endsWith("/")) {
+    path += "index.htm";
   }
-}
-
-
-void writetospiffs() {
-  //timenow ();
-  File f = SPIFFS.open("/temp_log.csv", "a");
-  if (!f) {
-    Serial.println("file open failed");
-  }
-  else {
-
-    Serial.println("====== Writing to SPIFFS file{i} =========");
-    // write  strings to file
-    f.print("[");
-    f.print(timenow());
-    for (int i = 0; i < NUM_MAX31856; i++) {
-      f.print(", ");
-     if (Probe[i].Present == true){
-      f.print(Probe[i].CurrentTemp);
-    }
-    else 
-    {f.print(Probe[i].Setpoint);}
-    
-  }
-  f.println("],");
-  }
-  f.close();
-  Serial.println("SPIFFS updated");
-
- 
-}
-
-/*__________________________________________________________WEB_FUNCTIONS__________________________________________________________*/
-
-
-bool handleFileRead(String path) { // send the right file to the client (if it exists)
-  Serial.println("handleFileRead: " + path);
-  if (path.endsWith("/")) path += "index.html";          // If a folder is requested, send the index file
-  String contentType = getContentType(path);             // Get the MIME type
+  String contentType = getContentType(path);
   String pathWithGz = path + ".gz";
-  if (LITTLEFS.exists(pathWithGz) || LITTLEFS.exists(path)) { // If the file exists, either as a compressed archive, or normal
-    if (LITTLEFS.exists(pathWithGz))                         // If there's a compressed version available
-      path += ".gz";                                         // Use the compressed verion
-    File file = LITTLEFS.open(path, "r");                    // Open the file
-    size_t sent = server.streamFile(file, contentType);    // Send it to the client
-    file.close();                                          // Close the file again
-    Serial.println(String("\tSent file: ") + path);
+  if (exists(pathWithGz) || exists(path)) {
+    if (exists(pathWithGz)) {
+      path += ".gz";
+    }
+    File file = FILESYSTEM.open(path, "r");
+    server.streamFile(file, contentType);
+    file.close();
     return true;
   }
-  Serial.println(String("\tFile Not Found: ") + path);   // If the file doesn't exist, return false
   return false;
 }
 
-void handleFileUpload() { // upload a new file to the SPIFFS
-  HTTPUpload& upload = server.upload();
-  String path;
-  if (upload.status == UPLOAD_FILE_START) {
-    path = upload.filename;
-    if (!path.startsWith("/")) path = "/" + path;
-    if (!path.endsWith(".gz")) {                         // The file server always prefers a compressed version of a file
-      String pathWithGz = path + ".gz";                  // So if an uploaded file is not compressed, the existing compressed
-      if (LITTLEFS.exists(pathWithGz))                     // version of that file must be deleted (if it exists)
-        LITTLEFS.remove(pathWithGz);
-    }
-    Serial.print("handleFileUpload Name: "); Serial.println(path);
-    fsUploadFile = LITTLEFS.open(path, "w");               // Open the file for writing in SPIFFS (create if it doesn't exist)
-    path = String();
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
-    if (fsUploadFile)
-      fsUploadFile.write(upload.buf, upload.currentSize); // Write the received bytes to the file
-  } else if (upload.status == UPLOAD_FILE_END) {
-    if (fsUploadFile) {                                   // If the file was successfully created
-      fsUploadFile.close();                               // Close the file again
-      Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
-      server.sendHeader("Location", "/success.html");     // Redirect the client to the success page
-      server.send(303);
-    } else {
-      server.send(500, "text/plain", "500: couldn't create file");
-    }
+void handleFileUpload() {
+  if (server.uri() != "/edit") {
+    return;
   }
+  HTTPUpload& upload = server.upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    String filename = upload.filename;
+    if (!filename.startsWith("/")) {
+      filename = "/" + filename;
+    }
+    DBG_OUTPUT_PORT.print("handleFileUpload Name: "); DBG_OUTPUT_PORT.println(filename);
+    fsUploadFile = FILESYSTEM.open(filename, "w");
+    filename = String();
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    //DBG_OUTPUT_PORT.print("handleFileUpload Data: "); DBG_OUTPUT_PORT.println(upload.currentSize);
+    if (fsUploadFile) {
+      fsUploadFile.write(upload.buf, upload.currentSize);
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile) {
+      fsUploadFile.close();
+    }
+    DBG_OUTPUT_PORT.print("handleFileUpload Size: "); DBG_OUTPUT_PORT.println(upload.totalSize);
+  }
+}
+
+void handleFileDelete() {
+  if (server.args() == 0) {
+    return server.send(500, "text/plain", "BAD ARGS");
+  }
+  String path = server.arg(0);
+  DBG_OUTPUT_PORT.println("handleFileDelete: " + path);
+  if (path == "/") {
+    return server.send(500, "text/plain", "BAD PATH");
+  }
+  if (!exists(path)) {
+    return server.send(404, "text/plain", "FileNotFound");
+  }
+  FILESYSTEM.remove(path);
+  server.send(200, "text/plain", "");
+  path = String();
+}
+
+void handleFileCreate() {
+  if (server.args() == 0) {
+    return server.send(500, "text/plain", "BAD ARGS");
+  }
+  String path = server.arg(0);
+  DBG_OUTPUT_PORT.println("handleFileCreate: " + path);
+  if (path == "/") {
+    return server.send(500, "text/plain", "BAD PATH");
+  }
+  if (exists(path)) {
+    return server.send(500, "text/plain", "FILE EXISTS");
+  }
+  File file = FILESYSTEM.open(path, "w");
+  if (file) {
+    file.close();
+  } else {
+    return server.send(500, "text/plain", "CREATE FAILED");
+  }
+  server.send(200, "text/plain", "");
+  path = String();
+}
+
+void handleFileList() {
+  if (!server.hasArg("dir")) {
+    server.send(500, "text/plain", "BAD ARGS");
+    return;
+  }
+
+  String path = server.arg("dir");
+  DBG_OUTPUT_PORT.println("handleFileList: " + path);
+
+
+  File root = FILESYSTEM.open(path);
+  path = String();
+
+  String output = "[";
+  if(root.isDirectory()){
+      File file = root.openNextFile();
+      while(file){
+          if (output != "[") {
+            output += ',';
+          }
+          output += "{\"type\":\"";
+          output += (file.isDirectory()) ? "dir" : "file";
+          output += "\",\"name\":\"";
+          output += String(file.name()).substring(1);
+          output += "\"}";
+          file = root.openNextFile();
+      }
+  }
+  output += "]";
+  server.send(200, "text/json", output);
 }
 
 void handleNotFound() { // if the requested file or page doesn't exist, return a 404 not found error
@@ -176,12 +230,41 @@ SaveBBQsettings("/BBQSettings.json");
 
 void startServer() { // Start a HTTP server with a file read handler and an upload handler
 
-  server.on("/edit.html",  HTTP_POST, []() {  // If a POST request is sent to the /edit.html address,
+ server.on("/list", HTTP_GET, handleFileList);
+  //load editor
+  server.on("/edit", HTTP_GET, []() {
+    if (!handleFileRead("/edit.htm")) {
+      server.send(404, "text/plain", "FileNotFound");
+    }
+  });
+  //create file
+  server.on("/edit", HTTP_PUT, handleFileCreate);
+  //delete file
+  server.on("/edit", HTTP_DELETE, handleFileDelete);
+  //first callback is called after the request has ended with all parsed arguments
+  //second callback handles file uploads at that location
+  server.on("/edit", HTTP_POST, []() {
     server.send(200, "text/plain", "");
-  }, handleFileUpload);                       // go to 'handleFileUpload'
+  }, handleFileUpload);
 
-  server.onNotFound(handleNotFound);          // if someone requests any other file or page, go to function 'handleNotFound'
-  // and check if the file exists
+  //called when the url is not defined here
+  //use it to load content from FILESYSTEM
+  server.onNotFound([]() {
+    if (!handleFileRead(server.uri())) {
+      server.send(404, "text/plain", "FileNotFound");
+    }
+  });
+
+  //get heap status, analog input value and all GPIO statuses in one json call
+  server.on("/all", HTTP_GET, []() {
+    String json = "{";
+    json += "\"heap\":" + String(ESP.getFreeHeap());
+    json += ", \"analog\":" + String(analogRead(A0));
+    json += ", \"gpio\":" + String((uint32_t)(0));
+    json += "}";
+    server.send(200, "text/json", json);
+    json = String();
+  });
 
   server.on("/restart", []() {
     server.send(200, "text/plain", "Restarting...");
@@ -195,6 +278,9 @@ void startServer() { // Start a HTTP server with a file read handler and an uplo
     time_elapsed = 0;
   });
 */
+
+server.on("/", handleFileRead(String("index.html"))); //Which routine to handle at root location
+
   server.on("/del", []() {
     server.send(200, "text/plain", "Deleting files...");
     deleteFile(SPIFFS, "/temp_log.csv");

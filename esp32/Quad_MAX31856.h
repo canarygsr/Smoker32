@@ -1,4 +1,5 @@
 #include <MAX31856.h>
+//https://github.com/engineertype/MAX31856
 
 #define SDO    19//12
 #define SDI    23//13

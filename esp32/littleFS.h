@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "FS.h"
-#include <LITTLEFS.h>
+#include <SPIFFS.h>
 
 /* You only need to format LITTLEFS the first time you run a
    test or else use the LITTLEFS plugin to create a partition
@@ -16,7 +16,7 @@
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\r\n", dirname);
 
-    File root = fs.open(dirname);
+    File root = FILESYSTEM.open(dirname);
     if(!root){
         Serial.println("- failed to open directory");
         return;
@@ -65,7 +65,7 @@ void removeDir(fs::FS &fs, const char * path){
 String readFile(fs::FS &fs, const char * path){
     Serial.printf("Reading file: %s\r\n", path);
 
-    File file = fs.open(path);
+    File file = FILESYSTEM.open(path);
     if(!file || file.isDirectory()){
         Serial.println("- failed to open file for reading");
     }
@@ -92,7 +92,7 @@ return fileContent;
 void writeFile(fs::FS &fs, const char * path, const char * message){
     Serial.printf("Writing file: %s\r\n", path);
 
-    File file = fs.open(path, FILE_WRITE);
+    File file = FILESYSTEM.open(path, FILE_WRITE);
     if(!file){
         Serial.println("- failed to open file for writing");
         return;
@@ -108,7 +108,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
 void appendFile(fs::FS &fs, const char * path, const char * message){
     Serial.printf("Appending to file: %s\r\n", path);
 
-    File file = fs.open(path, FILE_APPEND);
+    File file = FILESYSTEM.open(path, FILE_APPEND);
     if(!file){
         Serial.println("- failed to open file for appending");
         return;
@@ -160,7 +160,7 @@ void writeFile2(fs::FS &fs, const char * path, const char * message){
     }
 
     Serial.printf("Writing file to: %s\r\n", path);
-    File file = fs.open(path, FILE_WRITE);
+    File file = FILESYSTEM.open(path, FILE_WRITE);
     if(!file){
         Serial.println("- failed to open file for writing");
         return;
@@ -202,7 +202,7 @@ void testFileIO(fs::FS &fs, const char * path){
 
     static uint8_t buf[512];
     size_t len = 0;
-    File file = fs.open(path, FILE_WRITE);
+    File file = FILESYSTEM.open(path, FILE_WRITE);
     if(!file){
         Serial.println("- failed to open file for writing");
         return;
@@ -222,7 +222,7 @@ void testFileIO(fs::FS &fs, const char * path){
     Serial.printf(" - %u bytes written in %u ms\r\n", 2048 * 512, end);
     file.close();
 
-    file = fs.open(path);
+    file = FILESYSTEM.open(path);
     start = millis();
     end = start;
     i = 0;
@@ -253,13 +253,13 @@ void testFileIO(fs::FS &fs, const char * path){
 
 void startlittleFS(){
 
-   if(!LITTLEFS.begin(FORMAT_LITTLEFS_IF_FAILED)){
+   if(!SPIFFS.begin(FORMAT_LITTLEFS_IF_FAILED)){
         Serial.println("LITTLEFS Mount Failed");
         return;
     }
     Serial.println( "SPIFFS-like write file to new path and delete it w/folders" );
  //   writeFile2(LITTLEFS, "/new1/new2/new3/hello3.txt", "Hello3");
-    listDir(LITTLEFS, "/", 3);
+    listDir(SPIFFS, "/", 3);
 /* //   deleteFile2(LITTLEFS, "/new1/new2/new3/hello3.txt");
 //    listDir(LITTLEFS, "/", 3);
 //   createDir(LITTLEFS, "/mydir");

@@ -1,6 +1,8 @@
 #include <WiFi.h>
 #include <SimpleTimer.h>
+//https://github.com/marcelloromani/Arduino-SimpleTimer/tree/master/SimpleTimer
 
+#define FILESYSTEM SPIFFS
 #define NUM_MAX31856   4 // number of Max31856 chips to use
 #include "Quad_MAX31856.h"
 #include "BBQ_Functions.h"
